@@ -1,0 +1,77 @@
+import SwiftUI
+
+struct KeyMeasurementView: View {
+    @State private var bittings: [CGFloat] = Array(repeating: 50, count: 6) // 6 cortes por padrão
+    @State private var keyName: String = ""
+    @State private var keyCatalog: [String: [Int]] = [:]
+    
+    // Dimensão da tela
+    let screenHeight = UIScreen.main.bounds.height
+    let screenWidth = UIScreen.main.bounds.width
+    
+    var body: some View {
+        VStack {
+            Text("Ajuste os cortes da chave")
+                .font(.title2)
+                .padding()
+            
+            ZStack {
+                // Linha base para referência visual
+                ForEach(0..<bittings.count, id: \.self) { index in
+                    // Cada linha representando um corte da chave
+                    Text("Corte \(index + 1)")
+                        .offset(y: bittings[index] - 50) // Ajusta a posição da linha com base no valor do bitting
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    // Atualiza a posição da linha com base no gesto de arraste
+                                    bittings[index] = min(max(0, bittings[index] + value.translation.height), screenHeight)
+                                }
+                        )
+                }
+            }
+            .frame(height: screenHeight * 0.6)
+            
+            // Campo para nomear a chave
+            TextField("Digite o nome da chave", text: $keyName)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+            
+            Button(action: saveKey) {
+                Text("Salvar Chave")
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+            }
+            
+            List(keyCatalog.keys.sorted(), id: \.self) { key in
+                Text("\(key): \(keyCatalog[key]?.map { String($0) }.joined(separator: ", ") ?? "")")
+            }
+        }
+        .padding()
+    }
+    
+    // Função para salvar a chave no catálogo
+    func saveKey() {
+        // Normaliza os valores para bittings típicos (ajuste conforme a escala desejada)
+        let normalizedBittings = bittings.map { Int(($0 - 50) / 10) } // Ajusta para um intervalo de bittings realista
+        keyCatalog[keyName] = normalizedBittings
+        keyName = ""  // Limpa o campo de texto
+    }
+}
+
+struct ContentView: View {
+    var body: some View {
+        KeyMeasurementView()
+    }
+}
+
+@main
+struct KeyBittingApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+        }
+    }
+}
